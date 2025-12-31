@@ -16,11 +16,7 @@
 
 ---
 
-## 🛠 Installation
-
-### Swift Package Manager
-
-## 📦 Installation (Swift Package Manager)
+## 🛠 Installation (Swift Package Manager)
 
 1. Open **Xcode**
 2. Navigate to **File → Add Packages…**
@@ -36,17 +32,41 @@ https://github.com/Pharos-iOS-Team/PharosDownloadManager
 
 ## 🚀 Usage
 
-### 1. Setup
+### 1. Import the Package
 
 ```swift
 import PharosDownloadManager
-
-let manager = PharosDownloadManager.shared
-manager.enableLogging = true
-manager.headers = ["Authorization": "Bearer <token>"]
 ```
 
-### 2. Define a Downloadable Item
+---
+
+### 2. Initialize the Manager
+
+**Default PSDownloadManager**
+
+```swift
+let manager = PSDownloadManager.default
+```
+
+**Custom PSDownloadManager**
+
+```swift
+let config = URLSessionConfiguration.background(withIdentifier: "com.myapp.customBackground")
+config.isDiscretionary = false
+config.sessionSendsLaunchEvents = true
+
+let manager = PSDownloadManager(
+    maxConcurrentDownloads: 2,
+    downloadDirectory: customFolder,
+    headers: ["Authorization": "Bearer <token>"],
+    enableLogging = false,
+    configuration: config
+)
+```
+
+---
+
+### 3. Define a Downloadable Item
 
 ```swift
 struct FileItem: Downloadable {
@@ -55,22 +75,29 @@ struct FileItem: Downloadable {
 }
 ```
 
-### 3. Start a Download
+---
+
+### 4. Start a Download
 
 ```swift
 let file = FileItem(id: "file1", downloadURL: URL(string: "https://example.com/file.zip")!)
 manager.download(item: file)
 ```
 
-### 4. Pause / Resume / Cancel
+---
+
+### 5. Pause / Resume / Cancel / Delete
 
 ```swift
 manager.pause(item: file)
 manager.resume(item: file)
 manager.cancel(id: file.id)
+manager.delete(for: file)
 ```
 
-### 5. Observe Progress with Combine
+---
+
+### 6. Observe Progress with Combine
 
 ```swift
 import Combine
@@ -81,21 +108,26 @@ let cancellable = manager.progressPublisher(for: file.id)
     }
 ```
 
-### 6. Handle Background Session in AppDelegate / SceneDelegate
+---
+
+### 7. Handle Background Session in AppDelegate / SceneDelegate
 
 ```swift
 func application(_ application: UIApplication,
                  handleEventsForBackgroundURLSession identifier: String,
                  completionHandler: @escaping () -> Void) {
-    PharosDownloadManager.shared.handleBackgroundEvents(identifier: identifier, completionHandler: completionHandler)
+    PSDownloadManager.default.handleBackgroundEvents(identifier: identifier,
+                                                     completionHandler: completionHandler)
 }
 ```
 
-### 7. Save State Before Force Quit
+---
+
+### 8. Save State Before Force Quit
 
 ```swift
 func applicationWillTerminate(_ application: UIApplication) {
-    PharosDownloadManager.shared.saveStateBeforeTermination()
+    PSDownloadManager.default.saveStateBeforeTermination()
 }
 ```
 
@@ -108,6 +140,7 @@ func applicationWillTerminate(_ application: UIApplication) {
 ```swift
 public enum DownloadState: Equatable, Sendable {
     case idle
+    case queued
     case downloading(progress: Double)
     case paused(resumeData: Data?)
     case completed(localURL: URL)
@@ -117,12 +150,13 @@ public enum DownloadState: Equatable, Sendable {
 
 ---
 
-## ⚙️ Customization
+## ⚙ Customization
 
-- **Global Headers**: `PharosDownloadManager.shared.headers`
-- **Enable Logging**: `PharosDownloadManager.shared.enableLogging = true`
-- **Resume Data Directory**: Default is app's `Caches` directory
+- **Global Headers**: `PSDownloadManager.default.headers`
+- **Enable Logging**: `PSDownloadManager.default.enableLogging = true`
+- **Resume Data Directory**: Defaults to app's `Caches` folder
 - **Combine Publishers**: Observe individual download progress via `progressPublisher(for:)`
+- **Custom Download Directory, maxConcurrentDownloads, headers, enabling logs & URLSession Config**: You can initialize a separate manager with your own customization as needed (see usage example above).
 
 ---
 
