@@ -1,0 +1,30 @@
+name: Qodo PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  pr_agent:
+#    # Run only if the comment starts with '/' (e.g. /review) or is a PR event
+#    if: ${{ github.event.sender.type != 'Bot' && (github.event_name == 'pull_request' || startsWith(github.event.comment.body, '/')) }}
+    runs-on: [self-hosted, macOS, ARM64, iOS-Team]
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+    name: PR Agent
+    steps:
+      - name: PR Agent Action
+        id: pr-agent
+        uses: Codium-ai/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          config.model: "gemini/gemini-1.5-flash"
+          config.fallback_models: '["gemini/gemini-1.5-flash"]'
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"
